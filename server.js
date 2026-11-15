@@ -20,7 +20,7 @@ const PORT = Number(process.env.PORT || 3000);
 if (process.env.NODE_ENV === 'production' && (!process.env.SESSION_SECRET || process.env.SESSION_SECRET.length < 32)) {
   throw new Error('En producción configura SESSION_SECRET con al menos 32 caracteres en .env.');
 }
-const DATA_DIR = path.join(__dirname, 'data');
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 fs.mkdirSync(DATA_DIR, { recursive: true });
 const db = new Database(path.join(DATA_DIR, 'business.sqlite'));
 db.pragma('journal_mode = WAL');
@@ -123,7 +123,7 @@ function getProducts() {
   return db.prepare('SELECT * FROM products WHERE active=1 ORDER BY rowid').all().map(productFromRow);
 }
 
-const seed = JSON.parse(fs.readFileSync(path.join(DATA_DIR, 'products.json'), 'utf8'));
+const seed = JSON.parse(fs.readFileSync(path.join(__dirname, 'data', 'products.json'), 'utf8'));
 const insertProduct = db.prepare(`INSERT OR IGNORE INTO products(id,name,category,price,stock,tag,description,image,images,original_price)
  VALUES(@id,@name,@category,@price,@stock,@tag,@description,@image,@images,@originalPrice)`);
 const seedProducts = db.transaction(items => items.forEach(p => insertProduct.run({ ...p, images: JSON.stringify(p.images || []), originalPrice: p.originalPrice ?? null })));
